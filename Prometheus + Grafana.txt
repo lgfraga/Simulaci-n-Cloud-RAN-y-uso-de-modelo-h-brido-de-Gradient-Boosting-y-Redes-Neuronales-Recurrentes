@@ -1,0 +1,489 @@
+Prometheus, prometheus-node-exporter y Grafana
+
+Prometheus y prometheus-node-exporter:
+
+Verificar si existen las dependencias en los repositorios del sistema de prometheus y prometheus-node-exporter:
+
+
+apt search prometheus
+apt search prometheus-node-exporter
+
+Instalar las dependencias:
+
+sudo apt install prometheus prometheus-node-exporter -y
+
+
+Grafana: 
+
+Instalación:
+
+sudo apt-get install -y adduser libfontconfig1 musl -y
+wget https://dl.grafana.com/enterprise/release/grafana-enterprise_12.0.0_amd64.deb
+sudo dpkg -i grafana-enterprise_12.0.0_amd64.deb
+
+sudo /bin/systemctl daemon-reload
+sudo /bin/systemctl enable grafana-server
+sudo /bin/systemctl start grafana-server
+sudo systemctl status grafana-server
+
+http://192.168.1.71:3000
+
+Usuario: admin
+Clave: tfm2025
+
+
+Configuración para la simulación:
+
+root@vm3:/home/administrador# curl -s http://localhost:9100/metrics | \
+  grep node_network_receive_bytes_total | egrep "callout|smsout|internet"
+node_network_receive_bytes_total{device="callout"} 9.0845244e+07
+node_network_receive_bytes_total{device="internet"} 9.0845168e+07
+node_network_receive_bytes_total{device="smsout"} 9.0845168e+07
+root@vm3:/home/administrador# curl -s http://localhost:9100/metrics |   grep node_network_transmit_bytes_total | egrep "callout|smsout|internet"
+node_network_transmit_bytes_total{device="callout"} 2.204322e+06
+node_network_transmit_bytes_total{device="internet"} 2.204232e+06
+node_network_transmit_bytes_total{device="smsout"} 2.204322e+06
+root@vm3:/home/administrador#
+
+
+
+Creación del directorio del textfile collector:
+
+sudo mkdir -p /var/lib/node_exporter/textfile_collector
+sudo chmod 755 /var/lib/node_exporter/textfile_collector
+
+Instalar dependencias necesarias:
+
+sudo apt install jq
+
+Exportar las estadísticas de OVS a Prometheus:
+
+//////////////////////////ovs-policing-export.sh////////////////////////////////////////////////////////
+vi /usr/local/bin/ovs-policing-export.sh
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+DIR="/var/lib/node_exporter/textfile_collector"
+TMP="$(mktemp "$DIR/ovs_rate.prom.XXXX")"
+
+echo '# HELP ovs_interface_ingress_policing_rate_bits Ingress policing rate (bit/s)'  >> "$TMP"
+echo '# TYPE ovs_interface_ingress_policing_rate_bits gauge'                          >> "$TMP"
+
+for if in callout smsout internet; do
+  rate_kbps=$(ovs-vsctl get interface "$if" ingress_policing_rate | tr -d '[]"')
+  rate_kbps=${rate_kbps:-0}
+  echo "ovs_interface_ingress_policing_rate_bits{interface=\"$if\"} $((rate_kbps*1000))" >> "$TMP"
+done
+
+
+chmod 755 "$TMP"
+mv "$TMP" "$DIR/ovs_rate.prom"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+
+Dar permisos de ejecución:
+sudo chmod +x /usr/local/bin/ovs-policing-export.sh
+
+Comprobar que existe ovs_rate.prom y comprobar los permisos:
+ls -l /var/lib/node_exporter/textfile_collector/ovs_rate.prom
+
+Ejecutar el script:
+/usr/local/bin/ovs-policing-export.sh
+
+
+Hacerlo periódico cada 5s:
+echo "*/5 * * * * root /usr/local/bin/ovs-policing-export.sh" | sudo tee /etc/cron.d/ovs-policing
+
+Comprobación.
+Ver el contenido:
+cat /var/lib/node_exporter/textfile_collector/ovs_rate.prom
+
+
+/////////////////////////////ovs-portstats-export.sh - Monitorizar el tráfico de al OVS///////////////////////////////////////////////////
+vi /usr/local/bin/ovs-portstats-export.sh
+
+
+#!/usr/bin/env bash
+set -euo pipefail
+
+DIR="/var/lib/node_exporter/textfile_collector"
+TMP="$(mktemp "$DIR/ovs_portstats.prom.XXXX")"
+
+echo '# HELP ovs_port_rx_bytes_total Cumulative RX bytes per port'  >> "$TMP"
+echo '# TYPE ovs_port_rx_bytes_total counter'                       >> "$TMP"
+echo '# HELP ovs_port_tx_bytes_total Cumulative TX bytes per port'  >> "$TMP"
+echo '# TYPE ovs_port_tx_bytes_total counter'                       >> "$TMP"
+
+for port in callout smsout internet; do
+  rx=$(ovs-vsctl get interface "$port" statistics:rx_bytes 2>/dev/null | tr -d '[]"')
+  tx=$(ovs-vsctl get interface "$port" statistics:tx_bytes 2>/dev/null | tr -d '[]"')
+  rx=${rx:-0};  tx=${tx:-0}      # por si viene vacío
+
+  echo "ovs_port_rx_bytes_total{port=\"$port\"} $rx" >> "$TMP"
+  echo "ovs_port_tx_bytes_total{port=\"$port\"} $tx" >> "$TMP"
+done
+
+chmod 755 "$TMP"
+mv "$TMP" "$DIR/ovs_portstats.prom"
+
+///////////////////////////////////////////////////////////////////////////////////////////////////////
+
+Dar permisos de ejecución:
+sudo chmod +x /usr/local/bin/ovs-portstats-export.sh
+
+Ejecutar el script:
+/usr/local/bin/ovs-portstats-export.sh
+
+Comprobar que existe ovs_portstats.prom y comprobar los permisos:
+ls -l /var/lib/node_exporter/textfile_collector/ovs_portstats.prom
+
+cat /var/lib/node_exporter/textfile_collector/ovs_portstats.prom
+
+Hacerlo periódico cada 5s:
+
+echo "*/5 * * * * root /usr/local/bin/ovs-portstats-export.sh" | sudo tee /etc/cron.d/ovs-portstats
+
+
+
+
+sudo nano /etc/default/prometheus-node-exporter
+
+
+# Set the command-line arguments to pass to the server.
+# Due to shell escaping, to pass backslashes for regexes, you need to double
+# them (\\d for \d). If running under systemd, you need to double them again
+# (\\\\d to mean \d), and escape newlines too.
+ARGS="--collector.textfile.directory=/var/lib/node_exporter/textfile_collector"
+
+sudo systemctl restart prometheus-node-exporter
+systemctl show prometheus-node-exporter -p ExecStart
+
+
+Confirmar que los cron sigue activo:
+sudo tail -n2 /etc/cron.d/ovs-policing
+sudo tail -n2 /etc/cron.d/ovs-portstats
+
+
+Prometheus — Nuevos jobs:
+
+vi /etc/prometheus/prometheus.yml
+
+# Sample config for Prometheus.
+
+global:
+  scrape_interval:     5s # Set the scrape interval to every 15 seconds. Default is every 1 minute.
+  evaluation_interval: 5s # Evaluate rules every 15 seconds. The default is every 1 minute.
+  # scrape_timeout is set to the global default (10s).
+
+  # Attach these labels to any time series or alerts when communicating with
+  # external systems (federation, remote storage, Alertmanager).
+  external_labels:
+      monitor: 'example'
+
+# Alertmanager configuration
+alerting:
+  alertmanagers:
+  - static_configs:
+    - targets: ['localhost:9093']
+
+# Load rules once and periodically evaluate them according to the global 'evaluation_interval'.
+rule_files:
+  # - "first_rules.yml"
+  # - "second_rules.yml"
+
+# A scrape configuration containing exactly one endpoint to scrape:
+# Here it's Prometheus itself.
+scrape_configs:
+
+  # 1)  Exporter interno de OVS (porta 9090)
+  - job_name: 'vm3-ovs'
+    scrape_interval: 5s
+    scrape_timeout: 5s
+    static_configs:
+      - targets: ['192.168.1.71:9090']
+
+  # 2)  Node-Exporter completo (porta 9100) – todas las métricas
+  - job_name: 'node'
+    static_configs:
+      - targets: ['192.168.1.71:9100']
+
+  # 3)  Métricas específicas de OVS publicadas vía textfile-collector
+  #     - ovs_interface_ingress_policing_rate_bits  (script ovs-policing-export)
+  #     - ovs_port_rx_bits_per_second / ovs_port_tx_bits_per_second (script ovs-portstats-export)
+  #
+  #     Con metric_relabel_configs se puede seleccionar las métricas que empiezan por
+  #     'ovs_interface_'  o  'ovs_port_'  para que el job no devuelva métricas duplicada.
+  - job_name: 'vm3-ovs-metrics'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['192.168.1.71:9100']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'ovs_interface_.*|ovs_port_.*'
+        action: keep
+  # 4) Job “policing” (Aquí se filtra solo las métricas del
+  #    textfile collector que empiezan por ovs_interface_)
+  - job_name: 'vm3-ovs-policing'
+    scrape_interval: 5s
+    static_configs:
+      - targets: ['192.168.1.71:9100']
+    metric_relabel_configs:
+      - source_labels: [__name__]
+        regex: 'ovs_interface_.*'
+        action: keep
+
+Comprobar errores en el fichero:
+sudo promtool check config /etc/prometheus/prometheus.yml
+
+sudo systemctl reload prometheus
+
+
+Revisar que aparezcan las métricas:
+curl -s http://localhost:9100/metrics | grep ovs_interface_ingress_policing_rate_bits
+curl -s http://localhost:9100/metrics | grep ovs_port_rx_bytes_total
+curl -s http://localhost:9100/metrics | grep ovs_port_tx_bytes_total
+
+Verificar si se ha configurado correctamente el trabajo:
+
+http://192.168.1.71:9090/classic/targets
+
+
+Grafana configuración de las ventanas de gráfico:
+
+Tráfico entrante real (Mb/s):
+
+rate(ovs_port_rx_bytes_total{
+      job="vm3-ovs-metrics",
+      instance="192.168.1.71:9100",
+      port=~"$class"
+    }[$__rate_interval]) * 8e-6
+
+Tráfico saliente real (Mb/s):
+
+rate(ovs_port_tx_bytes_total{
+      job="vm3-ovs-metrics",
+      instance="192.168.1.71:9100",
+      port=~"$class"
+    }[$__rate_interval]) * 8e-6
+
+
+
+Tráfico en el OVS:
+
+ovs_interface_ingress_policing_rate_bits{interface=~"$class"} / 1e6
+
+
+
+Crea el servicio:
+
+sudo tee /etc/systemd/system/ovs-portstats-job.service >/dev/null <<'EOF'
+[Unit]
+Description=Export OVS port counters (bytes) to Node-Exporter textfile
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ovs-portstats-export.sh
+EOF
+
+
+
+
+
+sudo tee /etc/systemd/system/ovs-policing-export.service >/dev/null <<'EOF'
+[Unit]
+Description=Export OVS port counters (bytes) to Node-Exporter textfile
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/ovs-policing-export.sh
+EOF
+
+
+
+
+Crea el timer que lo ejecuta cada 5 s
+
+sudo tee /etc/systemd/system/ovs-portstats.timer >/dev/null <<'EOF'
+[Unit]
+Description=Run ovs-portstats-export.sh every 5 seconds
+
+[Timer]
+OnBootSec=5
+OnUnitActiveSec=5
+Unit=ovs-portstats-job.service
+
+[Install]
+WantedBy=timers.target
+EOF
+
+
+
+sudo tee /etc/systemd/system/ovs-policing-export.timer >/dev/null <<'EOF'
+[Unit]
+Description=Run ovs-policing-export.sh every 5 seconds
+
+[Timer]
+OnBootSec=5
+OnUnitActiveSec=5
+Unit=ovs-policing-export.service
+
+[Install]
+WantedBy=timers.target
+EOF
+
+
+/usr/local/bin/ovs-policing-export.sh
+
+
+Recargar systemd y arrancar el timer:
+sudo systemctl daemon-reload
+sudo systemctl enable --now ovs-portstats.timer
+sudo systemctl enable --now ovs-policing-export.timer
+
+Comprobar
+systemctl list-timers --all | grep ovs-portstats
+systemctl list-timers --all | grep ovs-policing-export
+
+
+
+
+Leer directamente los logs de iPerf3:
+//////////////////////////// Monitorizar el tráfico a la salida del OVS /////////////////////////////////
+
+vi /usr/local/bin/iperf-log-export.sh
+
+
+#!/usr/bin/env bash
+# /usr/local/bin/iperf-log-export.sh
+#
+# Extrae la media de bitrate (Mb/s) de las últimas 30 líneas de cada
+# log de iPerf3 y la publica como bit/s para Prometheus.
+
+set -euo pipefail
+
+LOG_DIR="/home/administrador/agenteSDN"             # ruta de los logs
+OUT_DIR="/var/lib/node_exporter/textfile_collector" # textfile-collector
+TMP="$(mktemp "$OUT_DIR/iperf_logs.prom.XXXX")"
+
+echo '# HELP iperf_rx_bits_per_second Average RX bitrate from iPerf3 log (bit/s)' >>"$TMP"
+echo '# TYPE iperf_rx_bits_per_second gauge'                                      >>"$TMP"
+
+for class in callout smsout internet; do
+  log="${LOG_DIR}/iperf_servidor_${class}.log"
+
+  # Últimas 30 líneas que contengan "Mbits/sec"
+  lines=$(grep -E 'Mbits/sec' "$log" | tail -n30 || true)
+
+  if [[ -n "$lines" ]]; then
+      # Captura todos los números antes de "Mbits/sec", suma y promedia
+      mbps=$(echo "$lines" \
+             | grep -oP '([0-9]+(\.[0-9]+)?)\s+Mbits/sec' \
+             | awk '{sum+=$1} END {if (NR>0) printf "%.3f", sum/NR; else print 0}')
+      bits=$(awk -v m="$mbps" 'BEGIN{printf "%.0f", m*1000000}')
+  else
+      bits=0
+  fi
+
+  echo "iperf_rx_bits_per_second{class=\"$class\"} $bits" >>"$TMP"
+done
+
+chmod 755 "$TMP"
+mv "$TMP" "$OUT_DIR/iperf_logs.prom"
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+sudo chmod +x /usr/local/bin/iperf-log-export.sh
+
+Comprobar que existe iperf_logs.prom y comprobar los permisos:
+ls -l /var/lib/node_exporter/textfile_collector/iperf_logs.prom
+
+cat /var/lib/node_exporter/textfile_collector/iperf_logs.prom
+
+
+
+
+
+Service y timer cada 5 s
+
+
+
+# servicio oneshot
+sudo tee /etc/systemd/system/iperf-log-export.service >/dev/null <<'EOF'
+[Unit]
+Description=Parse iPerf3 logs and export RX bitrate to Node-Exporter
+
+[Service]
+Type=oneshot
+ExecStart=/usr/local/bin/iperf-log-export.sh
+EOF
+
+# timer
+sudo tee /etc/systemd/system/iperf-log-export.timer >/dev/null <<'EOF'
+[Unit]
+Description=Run iperf-log-export.sh every 5 seconds
+
+[Timer]
+OnBootSec=5
+OnUnitActiveSec=5
+Unit=iperf-log-export.service
+
+[Install]
+WantedBy=timers.target
+EOF
+
+sudo systemctl daemon-reload
+sudo systemctl enable --now iperf-log-export.timer
+
+
+Comprobación:
+
+systemctl list-timers iperf-log-export.timer --no-pager
+
+watch -n5 cat /var/lib/node_exporter/textfile_collector/iperf_logs.prom
+
+Reiniciar el servicio:
+sudo systemctl restart iperf-log-export.timer
+
+
+
+Grafana:
+Ventana 1:
+Tráfico ascendente por clase  (Rx) gestionado por el OVS (vCU – vm3)
+
+A:
+iperf_rx_bits_per_second{class=~"$class"} / 1e6
+
+
+
+Ventana 2:
+Gestión del ancho de banda en OVS (vCU – vm3) orquestado por el controlador SDN (vCU – vm2) 
+
+
+
+A:
+ovs_interface_ingress_policing_rate_bits{
+  job="vm3-ovs-policing",
+  interface=~"$class"
+} / 1e6
+
+
+Ventana 3:
+Asignación dinámica del ancho de banda al tráfico ascendente en OVS (vCU – vm2 y vm3)
+
+A:
+ovs_interface_ingress_policing_rate_bits{
+  job="vm3-ovs-policing",
+  interface=~"$class"
+} / 1e6
+
+B:
+iperf_rx_bits_per_second{class=~"$class"} / 1e6
+
+
+
+
+
+
+
+
