@@ -1,0 +1,4 @@
+Cloud-RAN/vDU/vm1/simulacion_trafico/vDU/*.csv filter=lfs diff=lfs merge=lfs -text
+LightGBM-LSTM/*.csv filter=lfs diff=lfs merge=lfs -text
+LightGBM-LSTM/Dataset/*.txt filter=lfs diff=lfs merge=lfs -text
+vm's_Virtualbox/*.zip.* filter=lfs diff=lfs merge=lfs -text
