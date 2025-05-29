@@ -276,7 +276,7 @@ ovs_interface_ingress_policing_rate_bits{interface=~"$class"} / 1e6
 
 
 
-Crea el servicio:
+Crear el servicio:
 
 sudo tee /etc/systemd/system/ovs-portstats-job.service >/dev/null <<'EOF'
 [Unit]
@@ -303,7 +303,7 @@ EOF
 
 
 
-Crea el timer que lo ejecuta cada 5 s
+Crear el timer que lo ejecuta cada 5 s
 
 sudo tee /etc/systemd/system/ovs-portstats.timer >/dev/null <<'EOF'
 [Unit]
