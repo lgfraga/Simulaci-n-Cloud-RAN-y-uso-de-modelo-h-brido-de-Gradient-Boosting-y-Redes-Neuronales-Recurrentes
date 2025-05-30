@@ -136,6 +136,10 @@ Ver guía detallada en: "Prometheus + Grafana.txt".
 [![Ver el video:](https://img.youtube.com/vi/5K8qdiU4iXY/hqdefault.jpg)](https://www.youtube.com/watch?v=5K8qdiU4iXY)
 
 
+- **Ver el video: Simulación C-RAN utilizando servicios predictores LightGBM. Martes 2013/11/12 02H - 03H. (Pico mínimo de llamadas)**:
+[![Ver el video:](https://img.youtube.com/vi/niBXagzlz6c/hqdefault.jpg)](https://www.youtube.com/watch?v=niBXagzlz6c)
+
+
 - **Ver el video: Simulación C-RAN utilizando servicios predictores LSTM. Martes 2013/11/12 02H - 03H. (Pico mínimo de llamadas)**:
 [![Ver el video:](https://img.youtube.com/vi/N7WLmatYRuU/hqdefault.jpg)](https://www.youtube.com/watch?v=N7WLmatYRuU)
 
