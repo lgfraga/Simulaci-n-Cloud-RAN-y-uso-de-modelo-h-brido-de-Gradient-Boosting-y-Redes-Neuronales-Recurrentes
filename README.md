@@ -114,11 +114,11 @@ Ver guía detallada en: "Prometheus + Grafana.txt".
 - **Acceso**: `http://192.168.1.71:3000`, `User: admin`, `Passwd: tfm2025`
 
 ### Simulación y resultados
-- **Ver el video: Simulación C-RAN utilizando servicios predictores LightGBM. Domingo 2013/11/10 12H(Comportamiento en fin de semana)**:
+- **Ver el video: Simulación C-RAN utilizando servicios predictores LightGBM. Domingo 2013/11/10 12H(Fin de semana)**:
 [![Ver el video: Simulación C-RAN utilizando servicios predictores LightGBM. Domingo 2013/11/10 12H](https://img.youtube.com/vi/34ztSiY5ZBA/hqdefault.jpg)](https://www.youtube.com/watch?v=34ztSiY5ZBA)
 
 
-- **Ver el video: Simulación C-RAN utilizando servicios predictores LSTM. Domingo 2013/11/10 12H - 13H (Comportamiento en fin de semana)**:
+- **Ver el video: Simulación C-RAN utilizando servicios predictores LSTM. Domingo 2013/11/10 12H - 13H (Fin de semana)**:
 [![Ver el video: Simulación C-RAN utilizando servicios predictores LightGBM. Domingo 2013/11/10 12H](https://img.youtube.com/vi/TeoQ7JCzCG8/hqdefault.jpg)](https://www.youtube.com/watch?v=TeoQ7JCzCG8)
 
 El proyecto logró desarrollar un marco comparativo, demostrando que el modelo híbrido **Gradient Boosting** y **Redes Neuronales Recurrentes** ofrecen una excelente precisión predictiva en un entorno simulado de **Cloud-RAN**. Los resultados, soportados por una simulación a escala, aportan valor para estrategias de gestión de tráfico móvil en redes **5G** virtualizadas.
