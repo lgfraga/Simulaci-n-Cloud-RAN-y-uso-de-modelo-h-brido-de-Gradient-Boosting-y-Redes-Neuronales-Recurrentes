@@ -17,21 +17,21 @@ La metodología se apoya en un enfoque de gestión de proyectos, articulando pro
 ### Objetivo principal
 **Desarrollar y establecer un marco comparativo e integrador para evaluar los modelos de predicción de tráfico móvil basados en LightGBM y LSTM, utilizando datos históricos de tráfico de la ciudad de Milán y determinando cuál ofrece mayor precisión predictiva en un entorno que simula Cloud-RAN.**
 
-- **Cumplimiento**: Se desarrolló un marco comparativo integrando **LightGBM** y **LSTM**, utilizando datos históricos de Milán. La evaluación se realizó con métricas como **MSE** y **SMAPE**, y los modelos se desplegaron en un entorno simulado de **Cloud-RAN** con máquinas virtuales (**vm1**, **vm2**, **vm3**) y un predictor externo en el host. Los resultados, disponibles en los directorios `LightGBM-LSTM` y `Cloud-RAN`, muestran que ambos modelos logran buena precisión con un SMAPE < 10 % en la mayoría de ensayos.
+- **Cumplimiento**: Se desarrolló un marco comparativo integrando **LightGBM** y **LSTM**, utilizando datos históricos de Milán. La evaluación se realizó con métricas como **MSE** y **SMAPE**, y los modelos se desplegaron en un entorno simulado de **Cloud-RAN** con máquinas virtuales (**vm1**, **vm2**, **vm3**) y un predictor externo en el host. Los resultados, disponibles en los directorios `LightGBM-LSTM` y `Cloud-RAN`, muestran que ambos modelos logran buena precisión con un SMAPE < 10 % en la mayoría de ensayos (Peor rendimiento cuando hay mínimo tráfico).
 
 ### Objetivos secundarios
 
 1. **Procesamiento y análisis de datos**: Desarrollar un flujo de trabajo para el preprocesamiento y análisis del conjunto de datos históricos de tráfico móvil de Milán, identificando patrones temporales esenciales para la predicción.
-   - **Cumplimiento**: El script `generar_dataset.v03.py` en `LightGBM-LSTM` procesa los datos, generando datasets para **callout**, **smsout** e **internet**, identificando patrones horarios y semanales.
+   - **Cumplimiento**: El script `generar_dataset.v03.py` en `LightGBM-LSTM` procesa los datos, generando datasets para **callout**, **smsout** e **internet**.
 
 2. **Implementación del modelo LightGBM**: Desarrollar un sistema basado en **LightGBM** con un **SMAPE** inferior al 10% en valores a escala real, evaluado con **MSE** y coste computacional.
-   - **Cumplimiento**: Los scripts `Regresion_LightGBM_callout_lags_v5.py` (y equivalentes para **smsout** e **internet**) en `LightGBM-LSTM` implementan el modelo, logrando un **SMAPE** < 10%, con métricas y tiempos de inferencia detallados.
+   - **Cumplimiento**: Los scripts `Regresion_LightGBM_callout_lags_v5.py` (y equivalentes para **smsout** e **internet**) en `LightGBM-LSTM` implementan el modelo, logrando un **SMAPE** < 10%, con métricas y tiempos de inferencia.
 
 3. **Desarrollo del modelo LSTM**: Implementar una red **LSTM** usando **LightGBM** para ingeniería de características, buscando un **SMAPE** entre 10% y 20%, o inferior al 10% si es posible.
-   - **Cumplimiento**: `Integración_LightGBM+LSTM_predictor_callout_v9_128dim.py` (y equivalentes) en `LightGBM-LSTM` desarrolla el modelo **LSTM**, alcanzando un **SMAPE** competitivo, a menudo < 10%, gracias a características cíclicas y lags.
+   - **Cumplimiento**: `Integración_LightGBM+LSTM_predictor_callout_v9_128dim.py` (y equivalentes) en `LightGBM-LSTM` desarrolla el modelo **LSTM**, alcanzando un **SMAPE** muy adecuado, en pruebas < 10%, gracias a características cíclicas y lags.
 
 4. **Comparativa de modelos**: Evaluar los modelos con **SMAPE**, **MSE** y **R²** como complemento, y comparando tiempos de inferencia.
-   - **Cumplimiento**: Los scripts `evaluar_lightgbm_largo_horizonte.py`, `evaluar_lstm_largo_horizonte.py` y `comparar_largo_horizonte.py` en `LightGBM-LSTM` generan comparativas detalladas que se detallan en la memoria del proyecto
+   - **Cumplimiento**: Los scripts `evaluar_lightgbm_largo_horizonte.py`, `evaluar_lstm_largo_horizonte.py` y `comparar_largo_horizonte.py` en `LightGBM-LSTM` generan las comparativas que se detallan en la memoria del proyecto.
 5. **Diseño modular y despliegue en un entorno simulado de Cloud-RAN**: Diseñar un sistema con tres VMs y servicios predictores en el host, comunicados vía **API REST**.
    - **Cumplimiento**: El directorio `Cloud-RAN` contiene los scripts de inicialización (`configurar_vlan_vm1.sh`, `inicializar_red.sh`), simulación (`servicio_sim_traf.py`), controlador **SDN** (`controlador_sdn_lightgbm.py`, `controlador_sdn_lstm.py`) y agente **SDN** (`agente_sdn.py`), integrados con predictores en `LightGBM-LSTM` (`servidor_LightGBM_callout_v09.py`, `servidor_LightGBM_smsout_v09.py`,`servidor_LightGBM_internet_v09.py`,`servidor_LSTM_callout_v09.py`,`servidor_LSTM_smsout_v09.py`,`servidor_LSTM_internet_v09.py`).
 
@@ -70,7 +70,7 @@ La metodología se apoya en un enfoque de gestión de proyectos, articulando pro
    - Ejecutar: `./inicializar_red.sh`
    - Acceder e iniciar entorno: `cd /home/administrador/agenteSDN`, `source agenteSDN/bin/activate`
    - Ejecutar agente SDN: `python agente_sdn.py`
-   - Monitorizar (opcional): `http://192.168.1.71:3000` (Grafana).
+   - Monitorizar: `http://192.168.1.71:3000` (Grafana).
 
 2. **Inicializar vm2 (2 núcleos y 2 GB RAM)**
    - Iniciar sesión: `User: administrador`, `Passwd: tfm2025`
