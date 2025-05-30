@@ -121,4 +121,25 @@ Ver guía detallada en: "Prometheus + Grafana.txt".
 - **Ver el video: Simulación C-RAN utilizando servicios predictores LSTM. Domingo 2013/11/10 12H - 13H (Fin de semana)**:
 [![Ver el video: Simulación C-RAN utilizando servicios predictores LightGBM. Domingo 2013/11/10 12H](https://img.youtube.com/vi/TeoQ7JCzCG8/hqdefault.jpg)](https://www.youtube.com/watch?v=TeoQ7JCzCG8)
 
+- **Ver el video: Simulación C-RAN utilizando servicios predictores LSTM. Miércoles 2013/11/13 12H - 13H. (En semana)**:
+[![Ver el video:](https://img.youtube.com/vi/uqBWf9ksyac/hqdefault.jpg)](https://www.youtube.com/watch?v=uqBWf9ksyac)
+
+- **Ver el video: Ver el video: Simulación C-RAN utilizando servicios predictores LightGBM. Miércoles 2013/11/13 12H - 13H. (En semana)**:
+[![Ver el video:](https://img.youtube.com/vi/W7-L9HtIHaU/hqdefault.jpg)](https://www.youtube.com/watch?v=W7-L9HtIHaU)
+
+
+- **Ver el video: Simulación C-RAN utilizando servicios predictores LSTM. Martes 2013/11/05 16H - 17H. (Pico máximo de llamadas)**:
+[![Ver el video:](https://img.youtube.com/vi/XzgK3i8tIUE/hqdefault.jpg)](https://www.youtube.com/watch?v=XzgK3i8tIUE)
+
+
+- **Ver el video: Simulación C-RAN utilizando servicios predictores LightGBM. Martes 2013/11/05 16H - 17H. (Pico máximo de llamadas)**:
+[![Ver el video:](https://img.youtube.com/vi/5K8qdiU4iXY/hqdefault.jpg)](https://www.youtube.com/watch?v=5K8qdiU4iXY)
+
+
+- **Ver el video: Simulación C-RAN utilizando servicios predictores LightGBM. Martes 2013/11/12 02H - 03H. (Pico mínimo de llamadas)**:
+[![Ver el video:](https://img.youtube.com/vi/jFuhJlCbs30/hqdefault.jpg)](https://www.youtube.com/watch?v=jFuhJlCbs30)
+
+- **Ver el video: Simulación C-RAN utilizando servicios predictores LSTM. Martes 2013/11/12 02H - 03H. (Pico mínimo de llamadas)**:
+[![Ver el video:](https://img.youtube.com/vi/N7WLmatYRuU/hqdefault.jpg)](https://www.youtube.com/watch?v=N7WLmatYRuU)
+
 El proyecto logró desarrollar un marco comparativo, demostrando que el modelo híbrido **Gradient Boosting** y **Redes Neuronales Recurrentes** ofrecen una excelente precisión predictiva en un entorno simulado de **Cloud-RAN**. Los resultados, soportados por una simulación a escala, aportan valor para estrategias de gestión de tráfico móvil en redes **5G** virtualizadas.
